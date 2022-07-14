@@ -11,10 +11,11 @@ class Server:
         command_parts = command.split()
         match command_parts[0]:
             case 'signup':
-                if len(command_parts) != 3:
+                if len(command_parts) != 5:
                     self.send_message_to_client('wrong command')
                     return
-                if self.db_controller.user_signup(username=command_parts[1], password=command_parts[2]):
+                if self.db_controller.user_signup(username=command_parts[1], password=command_parts[2],
+                                                  name=command_parts[3], family=command_parts[4]):
                     self.send_info_to_client('user created')
                 else:
                     self.send_error_to_client('username exists')

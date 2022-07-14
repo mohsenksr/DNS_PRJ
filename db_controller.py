@@ -10,12 +10,14 @@ class DBController:
     def create_tables(self):
         create_user_table = """ CREATE TABLE IF NOT EXISTS User (
                             Username CHAR(25) NOT NULL PRIMARY KEY,
-                            Password CHAR(25) NOT NULL
+                            Password CHAR(25) NOT NULL,
+                            Name CHAR(32),
+                            Family CHAR(32)
                             ); """
         self.cursor.execute(create_user_table)
 
-    def user_signup(self, username, password):
-        create_user = f""" INSERT INTO User VALUES ('{username}', '{password}'); """
+    def user_signup(self, username, password, name, family):
+        create_user = f""" INSERT INTO User VALUES ('{username}', '{password}', '{name}', '{family}'); """
         try:
             self.cursor.execute(create_user)
             self.connection.commit()
