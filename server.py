@@ -1,15 +1,12 @@
-import os
-from db_controller import DBController
-from pathlib import Path
+from file_repo import FileRepo
 
 
 class Server:
     def __init__(self, client):
         self.client_user = None
         self.client = client
-        self.db_controller = DBController()
+        self.file_repo = FileRepo(self)
         self.current_path = '.'
-        self.file_max_length = 1000
 
     def get_command(self, command):
         command_parts = command.split()
@@ -21,24 +18,16 @@ class Server:
             case 'signup':
                 if len(command_parts) != 5:
                     self.send_message_to_client('wrong command')
-                    return
-                if self.db_controller.user_signup(username=command_parts[1], password=command_parts[2],
-                                                  name=command_parts[3], family=command_parts[4]):
-                    self.send_info_to_client('user created')
-                    os.mkdir(f'./{command_parts[1]}')
                 else:
-                    self.send_error_to_client('username exists')
+                    self.file_repo.signup(command_parts)
 
             case 'signin':
                 if len(command_parts) != 3:
                     self.send_error_to_client('wrong command')
-                    return
-                if self.db_controller.user_signin(username=command_parts[1], password=command_parts[2]):
-                    self.client_user = command_parts[1]
-                    self.current_path = f'./{self.client_user}'
-                    self.send_info_to_client('signed in successfully')
                 else:
-                    self.send_error_to_client('incorrect username or password')
+                    if (self.file_repo.signin(command_parts)):
+                        self.client_user = command_parts[1]
+                        self.current_path = f'./{self.client_user}'
 
             case 'signout':
                 if len(command_parts) != 1:
@@ -53,7 +42,6 @@ class Server:
                 if len(command_parts) != 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    current_path = '.'
                     path = command_parts[1]
                     folder_names = path.split('/')
                     directory_path = self.cd(self.current_path, '/'.join(folder_names))
@@ -61,21 +49,7 @@ class Server:
                     if directory_path == '.':
                         self.send_error_to_client('not permissible')
                     else:   
-                        folder_names = directory_path.split('/')
-
-                        flag = False
-                        for folder_name in folder_names:
-                            current_path += f'/{folder_name}'
-                            try:
-                                os.mkdir(current_path)
-                                flag = True
-                            except:
-                               continue
-
-                        if (flag):
-                            self.send_info_to_client('directory created successfully')
-                        else:
-                            self.send_info_to_client('directory already exists')
+                        self.file_repo.mkdir(directory_path)
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -83,7 +57,6 @@ class Server:
                 if len(command_parts) != 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    current_path = '.'
                     path = command_parts[1]
                     folder_names = path.split('/')[:-1]
                     directory_path = self.cd(self.current_path, '/'.join(folder_names))
@@ -92,18 +65,7 @@ class Server:
                         self.send_error_to_client('not permissible')
                     else:
                         folder_names = directory_path.split('/')
-
-                        for folder_name in folder_names:
-                            current_path += f'/{folder_name}'
-                            try:
-                                os.mkdir(current_path)
-                            except:
-                                continue
-
-                        file_name = path.split('/')[-1]
-                        Path(f'{current_path}/{file_name}').touch()
-
-                        self.send_info_to_client('file touched')
+                        self.file_repo.touch(folder_names, file_name=path.split('/')[-1])
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -116,7 +78,7 @@ class Server:
 
                     if new_path == '.':
                         self.send_error_to_client('not permissible')
-                    elif os.path.isdir(new_path):
+                    elif self.file_repo.isdir(new_path):
                         self.current_path = new_path
                     else:
                         self.send_error_to_client('no such directory')
@@ -128,15 +90,15 @@ class Server:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
                     if len(command_parts) == 1:
-                        os.system(f'ls {self.current_path}')
+                        self.file_repo.ls(self.current_path)
                     else:
                         path = command_parts[1]
                         new_path = self.cd(self.current_path, path)
 
                         if new_path == '.':
                             self.send_error_to_client('not permissible')
-                        elif os.path.isdir(new_path):
-                            os.system(f'ls {new_path}')
+                        elif self.file_repo.isdir(new_path):
+                            self.file_repo.ls(new_path)
                         else:
                             self.send_error_to_client('no such directory')
                 else:
@@ -152,11 +114,8 @@ class Server:
 
                         if new_path == '.':
                             self.send_error_to_client('not permissible')
-                        elif os.path.isfile(new_path):
-                            os.remove(new_path)
-                            self.send_info_to_client('file removed successfully')
                         else:
-                            self.send_error_to_client('no such file')
+                            self.file_repo.rm_file(new_path)
                     else:
                         if command_parts[1] != '-r':
                             self.send_error_to_client('wrong command')
@@ -166,11 +125,8 @@ class Server:
 
                             if new_path == '.':
                                 self.send_error_to_client('not permissible')
-                            elif os.path.isdir(new_path):
-                                os.rmdir(new_path)
-                                self.send_info_to_client('directory removed successfully')
                             else:
-                                self.send_error_to_client('no such directory')
+                                self.file_repo.rm_dir(new_path)
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -187,11 +143,9 @@ class Server:
 
                         if destination_path == '.':
                             self.send_error_to_client('not permissible')
-                        elif os.path.isfile(destination_path):
-                            self.send_info_to_client('a file with same name exists in that path')
                         else:
-                            os.replace(source_path, destination_path)
-                            self.send_error_to_client('file moved successfully')
+                            self.file_repo.mv_file(source_path, destination_path)
+
                     else:
                         if command_parts[1] != '-r':
                             self.send_error_to_client('wrong command')
@@ -204,11 +158,9 @@ class Server:
 
                             if destination_path == '.':
                                 self.send_error_to_client('not permissible')
-                            elif os.path.isdir(destination_path):
-                                self.send_info_to_client('a directory with same name exists in that path')
                             else:
-                                os.replace(source_path, destination_path)
-                                self.send_error_to_client('directory moved successfully')
+                                self.file_repo.mv_folder(source_path, destination_path)
+
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -218,14 +170,7 @@ class Server:
                 elif self.client_user:
                     path = command_parts[1]
                     path = self.cd(self.current_path, path)
-                    
-                    if os.path.isfile(path):
-                        fd = os.open(path, os.O_RDONLY)
-                        text = os.read(fd, self.file_max_length).decode()
-                        os.close(fd)
-                        self.send_message_to_client(text)
-                    else:
-                        self.send_error_to_client('not a directory')
+                    self.file_repo.read(path)
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -236,17 +181,7 @@ class Server:
                     path = command_parts[1]
                     text = str.encode(' '.join(command_parts[2:]))
                     path = self.cd(self.current_path, path)
-
-                    if os.path.isfile(path):
-                        fd = os.open(path, os.O_RDWR)
-                        os.write(fd, str.encode(' ' * self.file_max_length))
-                        os.close(fd)
-                        fd = os.open(path, os.O_RDWR)
-                        os.write(fd, text)
-                        os.close(fd)
-                        self.send_message_to_client('file edited successfully')
-                    else:
-                        self.send_error_to_client('not a directory')
+                    self.file_repo.edit(path, text)
                 else:
                     self.send_error_to_client('you are not signed in')
             
@@ -278,7 +213,13 @@ class Server:
         self.client.get_message(message)
 
     def send_error_to_client(self, error):
-        self.send_message_to_client('ERROR: ' + error)
+        self.send_message_to_client('error: ' + error)
 
     def send_info_to_client(self, info):
-        self.send_message_to_client('INFO: ' + info)
+        self.send_message_to_client('info: ' + info)
+
+    def get_message(self, message):
+        self.send_message_to_client(message)
+
+    def get_error(self, error):
+        self.send_error_to_client(error)

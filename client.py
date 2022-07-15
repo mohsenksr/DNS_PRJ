@@ -8,7 +8,10 @@ class Client:
     def start(self):
         while True:
             command = input()
-            self.server.get_command(command)
+            if command == 'quit()':
+                break
+            else:
+                self.server.get_command(command)
 
     def get_message(self, message):
         print(message)
