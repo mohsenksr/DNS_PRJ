@@ -9,9 +9,14 @@ class Server:
         self.client = client
         self.db_controller = DBController()
         self.current_path = '.'
+        self.file_max_length = 1000
 
     def get_command(self, command):
         command_parts = command.split()
+
+        if len(command_parts) == 0:
+            return
+
         match command_parts[0]:
             case 'signup':
                 if len(command_parts) != 5:
@@ -137,6 +142,114 @@ class Server:
                 else:
                     self.send_error_to_client('you are not signed in')
 
+            case 'rm':
+                if len(command_parts) != 2 and len(command_parts) != 3:
+                    self.send_error_to_client('wrong command')
+                elif self.client_user:
+                    if len(command_parts) == 2:
+                        path = command_parts[1]
+                        new_path = self.cd(self.current_path, path)
+
+                        if new_path == '.':
+                            self.send_error_to_client('not permissible')
+                        elif os.path.isfile(new_path):
+                            os.remove(new_path)
+                            self.send_info_to_client('file removed successfully')
+                        else:
+                            self.send_error_to_client('no such file')
+                    else:
+                        if command_parts[1] != '-r':
+                            self.send_error_to_client('wrong command')
+                        else:
+                            path = command_parts[2]
+                            new_path = self.cd(self.current_path, path)
+
+                            if new_path == '.':
+                                self.send_error_to_client('not permissible')
+                            elif os.path.isdir(new_path):
+                                os.rmdir(new_path)
+                                self.send_info_to_client('directory removed successfully')
+                            else:
+                                self.send_error_to_client('no such directory')
+                else:
+                    self.send_error_to_client('you are not signed in')
+
+            case 'mv':
+                if len(command_parts) != 3 and len(command_parts) != 4:
+                    self.send_error_to_client('wrong command')
+                elif self.client_user:
+                    if len(command_parts) == 3:
+                        source_path = command_parts[1]
+                        destination_path = command_parts[2]
+
+                        source_path = self.cd(self.current_path, source_path)
+                        destination_path = self.cd(self.current_path, destination_path)
+
+                        if destination_path == '.':
+                            self.send_error_to_client('not permissible')
+                        elif os.path.isfile(destination_path):
+                            self.send_info_to_client('a file with same name exists in that path')
+                        else:
+                            os.replace(source_path, destination_path)
+                            self.send_error_to_client('file moved successfully')
+                    else:
+                        if command_parts[1] != '-r':
+                            self.send_error_to_client('wrong command')
+                        else:
+                            source_path = command_parts[2]
+                            destination_path = command_parts[3]
+
+                            source_path = self.cd(self.current_path, source_path)
+                            destination_path = self.cd(self.current_path, destination_path)
+
+                            if destination_path == '.':
+                                self.send_error_to_client('not permissible')
+                            elif os.path.isdir(destination_path):
+                                self.send_info_to_client('a directory with same name exists in that path')
+                            else:
+                                os.replace(source_path, destination_path)
+                                self.send_error_to_client('directory moved successfully')
+                else:
+                    self.send_error_to_client('you are not signed in')
+
+            case 'read':
+                if len(command_parts) != 2:
+                    self.send_error_to_client('wrong command')
+                elif self.client_user:
+                    path = command_parts[1]
+                    path = self.cd(self.current_path, path)
+                    
+                    if os.path.isfile(path):
+                        fd = os.open(path, os.O_RDONLY)
+                        text = os.read(fd, self.file_max_length).decode()
+                        os.close(fd)
+                        self.send_message_to_client(text)
+                    else:
+                        self.send_error_to_client('not a directory')
+                else:
+                    self.send_error_to_client('you are not signed in')
+
+            case 'edit':
+                if len(command_parts) < 3:
+                    self.send_error_to_client('wrong command')
+                elif self.client_user:
+                    path = command_parts[1]
+                    text = str.encode(' '.join(command_parts[2:]))
+                    path = self.cd(self.current_path, path)
+
+                    if os.path.isfile(path):
+                        fd = os.open(path, os.O_RDWR)
+                        os.write(fd, str.encode(' ' * self.file_max_length))
+                        os.close(fd)
+                        fd = os.open(path, os.O_RDWR)
+                        os.write(fd, text)
+                        os.close(fd)
+                        self.send_message_to_client('file edited successfully')
+                    else:
+                        self.send_error_to_client('not a directory')
+                else:
+                    self.send_error_to_client('you are not signed in')
+            
             case other:
                 self.send_error_to_client('wrong command')
 
