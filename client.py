@@ -46,7 +46,20 @@ class Client:
         return fernet.decrypt(encoded_text.encode('utf-8')).decode()
 
     def get_message(self, message):
-        print(message)
+        words = message.split()
+
+        if words[0] == 'file:':
+            print(self.decode(' '.join(words[1:])))
+        else:
+            print(message)
+
+    def get_address(self, address):
+        dir_names = address.split('/')
+        for i in range(len(dir_names)):
+            dir_names[i] = self.decode(dir_names[i])
+        address = '/'.join(dir_names)
+
+        print(f'{dir_names[0]}({dir_names[0]}): {address}>')
 
 
 def get_hashed_command(command, index_to_hash):
