@@ -31,7 +31,6 @@ class Server:
                 if self.db_controller.user_signin(username=command_parts[1], password=command_parts[2]):
                     self.client_user = command_parts[1]
                     self.current_path = f'./{self.client_user}'
-                    os.chdir(self.current_path)
                     self.send_info_to_client('signed in successfully')
                     self.send_info_to_client(f'currently in path {self.current_path}')
                 else:
@@ -50,46 +49,57 @@ class Server:
                 if len(command_parts) != 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    current_path = f'./{self.client_user}'
+                    current_path = '.'
                     path = command_parts[1]
                     folder_names = path.split('/')
+                    directory_path = self.cd(self.current_path, '/'.join(folder_names))
 
-                    flag = False
-                    for folder_name in folder_names:
-                        current_path += f'/{folder_name}'
-                        try:
-                            os.mkdir(current_path)
-                            flag = True
-                        except:
-                            continue
+                    if directory_path == '.':
+                        self.send_error_to_client('not permissible')
+                    else:   
+                        folder_names = directory_path.split('/')
 
-                    if (flag):
-                        self.send_info_to_client('directory created successfully')
-                    else:
-                        self.send_info_to_client('directory already exists')
+                        flag = False
+                        for folder_name in folder_names:
+                            current_path += f'/{folder_name}'
+                            try:
+                                os.mkdir(current_path)
+                                flag = True
+                            except:
+                               continue
+
+                        if (flag):
+                            self.send_info_to_client('directory created successfully')
+                        else:
+                            self.send_info_to_client('directory already exists')
+                else:
+                    self.send_error_to_client('you are not signed in')
 
             case 'touch':
                 if len(command_parts) != 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    current_path = f'./{self.client_user}'
+                    current_path = '.'
                     path = command_parts[1]
                     folder_names = path.split('/')[:-1]
+                    directory_path = self.cd(self.current_path, '/'.join(folder_names))
 
-                    flag = False
-                    for folder_name in folder_names:
-                        current_path += f'/{folder_name}'
-                        try:
-                            os.mkdir(current_path)
-                            flag = True
-                        except:
-                            continue
+                    if directory_path == '.':
+                        self.send_error_to_client('not permissible')
+                    else:
+                        folder_names = directory_path.split('/')
 
-                    file_name = path.split('/')[-1]
-                    Path(f'{current_path}/{file_name}').touch()
+                        for folder_name in folder_names:
+                            current_path += f'/{folder_name}'
+                            try:
+                                os.mkdir(current_path)
+                            except:
+                                continue
 
-                    self.send_info_to_client('file touched')
+                        file_name = path.split('/')[-1]
+                        Path(f'{current_path}/{file_name}').touch()
 
+                        self.send_info_to_client('file touched')
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -97,11 +107,16 @@ class Server:
                 if len(command_parts) != 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    try:
-                        path = command_parts[1]
-                        os.chdir(path)
-                    except:
-                        self.send_error_to_client('not possible')
+                    path = command_parts[1]
+                    new_path = self.cd(self.current_path, path)
+
+                    if new_path == '.':
+                        self.send_error_to_client('not permissible')
+                    elif os.path.isdir(new_path):
+                        self.current_path = new_path
+                        self.send_info_to_client(f'your\'re in {self.current_path}')
+                    else:
+                        self.send_error_to_client('no such directory')
                 else:
                     self.send_error_to_client('you are not signed in')
 
@@ -109,12 +124,41 @@ class Server:
                 if len(command_parts) > 2:
                     self.send_error_to_client('wrong command')
                 elif self.client_user:
-                    os.system(command)
+                    if len(command_parts) == 1:
+                        os.system(f'ls {self.current_path}')
+                    else:
+                        path = command_parts[1]
+                        new_path = self.cd(self.current_path, path)
+
+                        if new_path == '.':
+                            self.send_error_to_client('not permissible')
+                        elif os.path.isdir(new_path):
+                            os.system(f'ls {new_path}')
+                        else:
+                            self.send_error_to_client('no such directory')
                 else:
                     self.send_error_to_client('you are not signed in')
 
             case other:
                 self.send_error_to_client('wrong command')
+
+    def cd(self, current_path, cd_path):
+        current_path = current_path.split('/')
+        cd_path = cd_path.split('/')
+
+        for dir in cd_path:
+            if dir == '.':
+                continue
+            if dir == '..':
+                current_path = current_path[:-1]
+                if len(current_path) == 1:
+                    return current_path[0]
+            else:
+                current_path.append(dir)
+
+        new_path = '/'.join(current_path)
+        return new_path
+
 
     def send_message_to_client(self, message):
         self.client.get_message(message)
