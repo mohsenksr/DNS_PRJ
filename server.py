@@ -142,6 +142,9 @@ class Server:
             case other:
                 self.send_error_to_client('wrong command')
 
+        if self.client_user:
+            self.send_message_to_client(f'{self.client_user}: {self.current_path}')
+
     def cd(self, current_path, cd_path):
         current_path = current_path.split('/')
         cd_path = cd_path.split('/')
