@@ -22,11 +22,11 @@ class Server:
                     self.file_repo.signup(command_parts)
 
             case 'signin':
-                if len(command_parts) != 3:
+                if len(command_parts) != 4:
                     self.send_error_to_client('wrong command')
                 else:
                     if (self.file_repo.signin(command_parts)):
-                        self.client_user = command_parts[1]
+                        self.client_user = command_parts[3]
                         self.current_path = f'./{self.client_user}'
 
             case 'signout':
