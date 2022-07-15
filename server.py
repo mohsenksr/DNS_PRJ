@@ -16,7 +16,7 @@ class Server:
 
         match command_parts[0]:
             case 'signup':
-                if len(command_parts) != 5:
+                if len(command_parts) != 6:
                     self.send_message_to_client('wrong command')
                 else:
                     self.file_repo.signup(command_parts)

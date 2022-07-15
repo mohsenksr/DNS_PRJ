@@ -14,7 +14,8 @@ class FileRepo:
                                                   name=args[3], family=args[4]):
             self.send_message_to_server('user created')
             username = args[1]
-            os.mkdir(f'./{username}')
+            hashed_username = args[5]
+            os.mkdir(f'./{hashed_username}')
         else:
             self.send_error_to_server('username exists')
 
