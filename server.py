@@ -32,7 +32,6 @@ class Server:
                     self.client_user = command_parts[1]
                     self.current_path = f'./{self.client_user}'
                     self.send_info_to_client('signed in successfully')
-                    self.send_info_to_client(f'currently in path {self.current_path}')
                 else:
                     self.send_error_to_client('incorrect username or password')
 
@@ -114,7 +113,6 @@ class Server:
                         self.send_error_to_client('not permissible')
                     elif os.path.isdir(new_path):
                         self.current_path = new_path
-                        self.send_info_to_client(f'your\'re in {self.current_path}')
                     else:
                         self.send_error_to_client('no such directory')
                 else:
@@ -143,7 +141,7 @@ class Server:
                 self.send_error_to_client('wrong command')
 
         if self.client_user:
-            self.send_message_to_client(f'{self.client_user}: {self.current_path}')
+            self.send_message_to_client(f'{self.client_user}({self.client_user}): {self.current_path[2:]}>')
 
     def cd(self, current_path, cd_path):
         current_path = current_path.split('/')
