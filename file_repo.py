@@ -58,7 +58,9 @@ class FileRepo:
         self.send_message_to_server('file touched')
 
     def ls(self, path):
-        os.system(f'ls {path}')
+        list = os.listdir(path)
+        files = ' '.join(list)
+        self.send_message_to_server(f'file: {files}')
 
     def rm_file(self, path):
         if self.isfile(path):
