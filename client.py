@@ -63,11 +63,14 @@ class Client:
                 command_parts = command.split()
                 new_directory_parts = []
                 for part in command_parts[1].split('/'):
-                    new_directory_parts.append(self.encode(part))
+                    if part == '..' or part == '.':
+                        new_directory_parts.append(part)
+                    else:
+                        new_directory_parts.append(self.encode(part))
 
                 command_parts[1] = "/".join(new_directory_parts)
 
-                text = " ".join(command_parts[1:])
+                text = " ".join(command_parts[2:])
                 encoded_text = self.encode(text)
                 command = 'edit ' + command_parts[1] + ' ' + encoded_text
 

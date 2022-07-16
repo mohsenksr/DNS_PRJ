@@ -16,13 +16,13 @@ class Server:
 
         match command_parts[0]:
             case 'signup':
-                if len(command_parts) != 6:
+                if len(command_parts) < 6:
                     self.send_message_to_client('wrong command')
                 else:
                     self.file_repo.signup(command_parts)
 
             case 'signin':
-                if len(command_parts) != 4:
+                if len(command_parts) < 4:
                     self.send_error_to_client('wrong command')
                 else:
                     if (self.file_repo.signin(command_parts)):
