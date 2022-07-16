@@ -189,7 +189,7 @@ class Server:
                 self.send_error_to_client('wrong command')
 
         if self.client_user:
-            self.send_message_to_client(f'{self.client_user}({self.client_user}): {self.current_path[2:]}>')
+            self.send_address_to_client(self.current_path[2:])
 
     def cd(self, current_path, cd_path):
         current_path = current_path.split('/')
@@ -217,6 +217,9 @@ class Server:
 
     def send_info_to_client(self, info):
         self.send_message_to_client('info: ' + info)
+
+    def send_address_to_client(self, address):
+        self.client.get_address(address)
 
     def get_message(self, message):
         self.send_message_to_client(message)

@@ -93,7 +93,7 @@ class FileRepo:
             fd = os.open(path, os.O_RDONLY)
             text = os.read(fd, self.file_max_length).decode()
             os.close(fd)
-            self.send_message_to_server(text)
+            self.send_message_to_server(f'file: {text}')
         else:
             self.send_error_to_server('not a file')
     
