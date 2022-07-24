@@ -1,23 +1,31 @@
 from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Cipher import PKCS1_OAEP
-import ast
+import base64
 
 
 class Encryption:
-    def encrypt(self, message):
-        random_generator = Random.new().read
-        key = RSA.generate(1024, random_generator)
+    def generate_keys(self):
+        modulus_length = 1024
+        key = RSA.generate(modulus_length)
+        pub_key = key.publickey()
+        return key, pub_key
 
-        public_key = key.publickey()
+    def encrypt_private_key(self, message, private_key):
+        encryptor = PKCS1_OAEP.new(private_key)
+        encrypted_msg = encryptor.encrypt(str.encode(message))
+        encoded_encrypted_msg = base64.b64encode(encrypted_msg)
+        return encoded_encrypted_msg
 
+    def decrypt_public_key(self, encoded_encrypted_msg, public_key):
         encryptor = PKCS1_OAEP.new(public_key)
-        encrypted = encryptor.encrypt(str.encode(message))
+        decoded_encrypted_msg = base64.b64decode(encoded_encrypted_msg)
+        decoded_decrypted_msg = encryptor.decrypt(decoded_encrypted_msg)
+        return decoded_decrypted_msg.decode('utf-8')
 
-        return encrypted, key
 
-    def decrypt(self, encrypted, key):
-        decryptor = PKCS1_OAEP.new(key)
-        decrypted = decryptor.decrypt(ast.literal_eval(str(encrypted)))
-        return decrypted.decode('utf-8')
-
+private, public = Encryption().generate_keys()
+message = 'Hello world'
+encoded = Encryption().encrypt_private_key(message, public)
+decoded = Encryption().decrypt_public_key(encoded, private)
+print(decoded)
