@@ -28,6 +28,7 @@ class Server:
                     if (self.file_repo.signin(command_parts)):
                         self.client_user = command_parts[3]
                         self.current_path = f'./{self.client_user}'
+                        self.file_repo.update(command_parts[1], self.client_user)
 
             case 'signout':
                 if len(command_parts) != 1:
@@ -184,6 +185,19 @@ class Server:
                     self.file_repo.edit(path, text)
                 else:
                     self.send_error_to_client('you are not signed in')
+
+            case 'share':
+                if len(command_parts) < 5 or len(command_parts) > 6:
+                    self.send_error_to_client('wrong command')
+                elif len(command_parts) == 6 and command_parts[3] != '-r' and command_parts[3] != '-rw':
+                    self.send_error_to_client('wrong command')
+                else:
+                    path = self.cd(self.current_path, command_parts[1])
+                    
+                    if len(command_parts) == 6 and command_parts[3] == '-rw':
+                        self.file_repo.cp_file_rw(path, command_parts[-2], command_parts[-1])    
+                    else:
+                        self.file_repo.cp_file_r(path, command_parts[-2], command_parts[-1])
             
             case other:
                 self.send_error_to_client('wrong command')
@@ -208,6 +222,14 @@ class Server:
         new_path = '/'.join(current_path)
         return new_path
 
+    def get_path(self, path):
+        return self.cd(self.current_path, path)
+
+    def read(self, path):
+        return self.file_repo.show(path)
+
+    def show_files(self, path):
+        return self.file_repo.show_files(path)
 
     def send_message_to_client(self, message):
         self.client.get_message(message)
