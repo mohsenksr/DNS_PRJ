@@ -109,6 +109,11 @@ class Client:
 
         if words[0] == 'file:':
             print(self.decode(' '.join(words[1:])))
+        elif words[0] == 'files:':
+            result = ""
+            for word in words[1:]:
+                result = self.decode(word) + " " + result
+            print(result)
         else:
             print(message)
 

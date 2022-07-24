@@ -60,7 +60,7 @@ class FileRepo:
     def ls(self, path):
         list = os.listdir(path)
         files = ' '.join(list)
-        self.send_message_to_server(f'file: {files}')
+        self.send_message_to_server(f'files: {files}')
 
     def rm_file(self, path):
         if self.isfile(path):
