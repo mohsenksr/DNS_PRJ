@@ -2,11 +2,12 @@ from server import Server
 from hashlib import sha256
 import base64
 
-
 class Client:
     def __init__(self):
         self.server = Server(self)
         self.password = '-'
+        self.chr_size = 127 - 32
+        self.min_char = 32
 
     def start(self):
         while True:
@@ -76,16 +77,25 @@ class Client:
 
             self.server.get_command(command)
 
+    def char_to_num(self, c):
+        return ord(c) - self.min_char
+
+    def num_to_char(self, num):
+        return chr(num + self.min_char)
+
     def sum(self, a, b):
         result = ""
         for i in range(len(a)):
-            result += chr(ord(a[i]) + ord(b[i % len(b)]))
+         #   print("add1: ", a[i], self.char_to_num(a[i]), b[i % len(b)], self.char_to_num(b[i % len(b)]))
+         #   print("add2: ", ((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size), self.num_to_char((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size))
+            result += self.num_to_char((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size)
         return result
 
     def sub(self, a, b):
         result = ""
         for i in range(len(a)):
-            result += chr(ord(a[i]) - ord(b[i % len(b)]))
+         #   print("sub: ", ord(a[i]), ord(b[i % len(b)]))
+            result += self.num_to_char((self.char_to_num(a[i]) - self.char_to_num(b[i % len(b)]) + self.chr_size) % self.chr_size)
         return result
 
     def encode(self, plain_text):
