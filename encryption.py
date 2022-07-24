@@ -22,10 +22,3 @@ class Encryption:
         decoded_encrypted_msg = base64.b64decode(encoded_encrypted_msg)
         decoded_decrypted_msg = encryptor.decrypt(decoded_encrypted_msg)
         return decoded_decrypted_msg.decode('utf-8')
-
-
-private, public = Encryption().generate_keys()
-message = 'Hello world'
-encoded = Encryption().encrypt_private_key(message, public)
-decoded = Encryption().decrypt_public_key(encoded, private)
-print(decoded)
