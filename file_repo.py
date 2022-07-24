@@ -16,6 +16,8 @@ class FileRepo:
             username = args[1]
             hashed_username = args[5]
             os.mkdir(f'./{hashed_username}')
+            os.mkdir(f'./{hashed_username}/shared_r')
+            os.mkdir(f'./{hashed_username}/shared_rw')
         else:
             self.send_error_to_server('username exists')
 

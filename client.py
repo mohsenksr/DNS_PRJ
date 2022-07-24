@@ -38,7 +38,7 @@ class Client:
                 command_parts = command.split()
                 new_directory_parts = []
                 for part in command_parts[-1].split('/'):
-                    if part == '..' or part == '.':
+                    if part == '..' or part == '.' or part == 'shared_r' or part == 'shared_rw':
                         new_directory_parts.append(part)
                     else:
                         new_directory_parts.append(self.encode(part))
@@ -52,7 +52,7 @@ class Client:
                 new_directory_parts = []
 
                 for part in command_parts[-1].split('/'):
-                    if part == '..' or part == '.':
+                    if part == '..' or part == '.' or part == 'shared_r' or part == 'shared_rw':
                         new_directory_parts.append(part)
                     else:
                         new_directory_parts.append(self.encode(part))
@@ -86,15 +86,12 @@ class Client:
     def sum(self, a, b):
         result = ""
         for i in range(len(a)):
-         #   print("add1: ", a[i], self.char_to_num(a[i]), b[i % len(b)], self.char_to_num(b[i % len(b)]))
-         #   print("add2: ", ((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size), self.num_to_char((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size))
             result += self.num_to_char((self.char_to_num(a[i]) + self.char_to_num(b[i % len(b)])) % self.chr_size)
         return result
 
     def sub(self, a, b):
         result = ""
         for i in range(len(a)):
-         #   print("sub: ", ord(a[i]), ord(b[i % len(b)]))
             result += self.num_to_char((self.char_to_num(a[i]) - self.char_to_num(b[i % len(b)]) + self.chr_size) % self.chr_size)
         return result
 
@@ -112,7 +109,10 @@ class Client:
         elif words[0] == 'files:':
             result = ""
             for word in words[1:]:
-                result = self.decode(word) + " " + result
+                if word == 'shared_r' or word == 'shared_rw':
+                    result = word + ' ' + result
+                else:
+                    result = self.decode(word) + ' ' + result
             print(result)
         else:
             print(message)
@@ -120,7 +120,8 @@ class Client:
     def get_address(self, address):
         dir_names = address.split('/')
         for i in range(len(dir_names)):
-            dir_names[i] = self.decode(dir_names[i])
+            if dir_names[i] != 'shared_r' and dir_names[i] != 'shared_rw':
+                dir_names[i] = self.decode(dir_names[i])
         address = '/'.join(dir_names)
 
         print(f'{dir_names[0]}({dir_names[0]}): {address}>')
